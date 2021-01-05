@@ -19,7 +19,7 @@
  *   out of or in connection with the Software or the use or other dealings in the
  *   Software.
  */
- 
+
 #pragma once
 
 #include <string>
@@ -34,28 +34,28 @@
 struct mtest
 {
   enum {enableColor=1,enableStdCout=2};
-  
+
   class random
   {
   public:
-    random(uint32_t seed=0xb87cb6c4) { state_=seed; }    
+    random(uint32_t seed=0xb87cb6c4) { state_=seed; }
     uint32_t getUint32()
     {
       state_=((state_<<7)^(state_>>13))*6189107U;
       return state_;
     }
-    
+
   protected:
     uint32_t state_;
   };
-  
+
   class manager;
 
   class test
   {
   public:
     friend class manager;
-    
+
     struct group_handler_t { void (*setup_)(); void (*teardown_)(); };
 
     test() {}
@@ -64,7 +64,7 @@ struct mtest
     virtual void testRun() =0;
     virtual void testSetup() {}
     virtual void testTeardown() {}
-    
+
     static void groupSetup() {}
     static void groupTeardown() {}
 
@@ -72,7 +72,7 @@ struct mtest
 
   protected:
     virtual group_handler_t getGroupHandler() { return {test::groupSetup,test::groupTeardown}; }
-    
+
     void setName(const std::string &name) { name_=name; }
     std::string name_;
   };
@@ -117,7 +117,7 @@ struct mtest
     const char *HORI="\u2500";
     const char *CONT="\u251C";
     const char *CONA="\u2514";
-    
+
     const uint64_t npos=std::string::npos;
 
     manager():cout_(buffer_.rdbuf())
@@ -134,7 +134,7 @@ struct mtest
       {
         std::cout.rdbuf(buffer_.rdbuf());
       }
-      
+
       if(options&mtest::enableColor)
       {
         colorRed_="\x1B[38;5;9m";
@@ -152,7 +152,7 @@ struct mtest
       for(auto &i : tests_)
       {
         std::string group=i.first;
-        
+
         //create test list
         std::list<std::pair<std::string,test*>> testList;
         for(auto j : i.second)
@@ -169,7 +169,7 @@ struct mtest
             ++skipped;
             continue;
           }
-          
+
           testList.push_back(std::make_pair(completeName,j));
         }
 
@@ -177,13 +177,13 @@ struct mtest
         {
           continue;
         }
-        
+
         //call groupSetup
         if(handler_.find(group) != handler_.end())
         {
           handler_.find(group)->second.setup_();
         }
-        
+
         if(group == "#group")
         {
           cout_<<"[-----] tests without a group"<<" ("<<(testList.size())<<" tests)"<<std::endl;
@@ -196,9 +196,9 @@ struct mtest
         for(auto j : testList)
         {
           test *t=j.second;
-          
+
           cout_<<"[ RUN ] "<<(j.first)<<std::endl;
-          
+
           currentTestName_=j.first;
           currentTestFailed_=false;
 
@@ -216,13 +216,13 @@ struct mtest
           {
             currentTestFailed_=true;
             cout_<<"   "<<(CONT)<<(HORI)<<" Unexpected Exception\n   "<<(VERT)<<std::endl;
-            
+
             //teardown is case of error
             try
             {
               t->testTeardown();
             }
-            catch(...) { cout_<<"   "<<(CONT)<<(HORI)<<" Teardown Exception\n   "<<(VERT)<<std::endl; }            
+            catch(...) { cout_<<"   "<<(CONT)<<(HORI)<<" Teardown Exception\n   "<<(VERT)<<std::endl; }
           }
 
           if(currentTestFailed_)
@@ -241,7 +241,7 @@ struct mtest
         {
           handler_.find(group)->second.teardown_();
         }
-        
+
         cout_<<"[-----]\n"<<std::endl;
       }
 
@@ -267,7 +267,7 @@ struct mtest
       }
 
       i->second.push_back(t);
-      
+
       if(handler.setup_ && handler.teardown_)
       {
         handler_.insert(std::make_pair(group,handler));
@@ -380,7 +380,7 @@ struct mtest
     std::map<std::string,std::list<test*>> tests_;
     std::map<std::string,test::group_handler_t> handler_;
   };
-  
+
  static void runAllTests(uint32_t options=enableColor,std::ostream &cout=std::cout) { manager::instance().runAllTests("*",options,cout); }
  static void runAllTests(const std::string &filter,uint32_t options=enableColor,std::ostream &cout=std::cout) { manager::instance().runAllTests(filter,options,cout); }
 };
@@ -413,4 +413,4 @@ struct mtest
     mtest::condition(x,std::string() + "Require \"" + #x + "\" failed (at line " + std::to_string(__LINE__) + ")",mtest::condition::fatal)
 
 #define EXPECT(x) mtest::manager::instance()= \
-    mtest::condition(x,std::string() + "Expect \"" + #x " (= " + (x) + ")"+ "\" failed (at line " + std::to_string(__LINE__) + ")",mtest::condition::expect)
+    mtest::condition(x,std::string() + "Expect \"" + #x + "\" failed (at line " + std::to_string(__LINE__) + ")",mtest::condition::expect)
